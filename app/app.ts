@@ -3,8 +3,8 @@ import { join as pathJoin, basename as pathBasename } from "path";
 
 type Foo = string | Foo[];
 
-// ディレクトリからファイル/ディレクトリを再帰的に取得する
-export function exploreDirectoryRecursively(dirPath: string): string[] | [] {
+// ディレクトリからファイル/ディレクトリを再帰的に取得し、flatしたフルパスの配列を返す
+export function exploreDirectoryRecursively(dirPath: string): string[] {
   if (!fs.statSync(dirPath).isDirectory()) {
     return [];
   }
@@ -25,38 +25,29 @@ export function exploreDirectoryRecursively(dirPath: string): string[] | [] {
     .flat();
 }
 
-//  pathの末尾のファイル名を取得
-export function getFilename(fullPath: string): string {
-  //  fileであることを担保
-  if (!fs.statSync(fullPath).isFile()) {
-    console.log(`${fullPath}はファイルではありません`);
-    return "";
-  }
-  return pathBasename(fullPath);
-}
-
 // 先に入力した引数にだけ存在するファイルを取得する
 export function getOnlyExistsInFormer(
   filePathListA: string[],
   filePathListB: string[]
-): Set<string> {
+): string[] {
   // dirA/ファイル までのパスを詰めたセットを作成
-  const filePathListASet = new Set<string>(filePathListA);
+  const basenameSetA = new Set<string>(
+    filePathListA.map((value: string) => pathBasename(value))
+  );
 
-  filePathListA.map((filePathA) => {
-    const filenameA = getFilename(filePathA);
+  // ListA、ListBに存在する同名のファイルのパスを取得する
+  const pathsExistOnlyInFormer: string[] = filePathListB
+    .map((filePath): string | null => {
+      const basename = pathBasename(filePath);
 
-    // ListBに同名のファイルが存在する場合セットから除外する
-    filePathListB.map((filePathB) => {
-      const filenameB = getFilename(filePathB);
-
-      if (filenameA === filenameB) {
-        filePathListASet.delete(filePathA);
+      if (!basenameSetA.has(basename)) {
+        return filePath;
       }
-    });
-  });
+      return null;
+    })
+    .filter(Boolean) as string[];
 
-  return filePathListASet;
+  return pathsExistOnlyInFormer;
 }
 
 export function checkExistsFileOrDirectory(path: string): boolean {
@@ -94,9 +85,6 @@ async function main() {
   const filePathListA = exploreDirectoryRecursively(baseDirA);
   const filePathListB = exploreDirectoryRecursively(baseDirB);
 
-  // console.dir({ result: filePathListA }, { depth: null });
-  // console.dir({ result: filePathListB }, { depth: null });
-
   // baseDirAに存在するファイルだけを抽出
   const onlyExistsBaseDirA = getOnlyExistsInFormer(
     filePathListA,
@@ -108,5 +96,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  // process.exit(1); // process.exit()があるとtestできない？
+  process.exit(1); // process.exit()があるとtestできない？
 });
