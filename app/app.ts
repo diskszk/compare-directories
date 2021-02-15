@@ -1,8 +1,6 @@
 import fs from "fs";
 import { join as pathJoin, basename as pathBasename } from "path";
 
-type Foo = string | Foo[];
-
 // ディレクトリからファイル/ディレクトリを再帰的に取得し、flatしたフルパスの配列を返す
 export function exploreDirectoryRecursively(dirPath: string): string[] {
   if (!fs.statSync(dirPath).isDirectory()) {
@@ -30,17 +28,17 @@ export function getOnlyExistsInFormer(
   filePathListA: string[],
   filePathListB: string[]
 ): string[] {
-  // dirA/ファイル までのパスを詰めたセットを作成
-  const basenameSetA = new Set<string>(
-    filePathListA.map((value: string) => pathBasename(value))
+  // dirB/ファイル までのパスを詰めたセットを作成
+  const basenameSetB = new Set<string>(
+    filePathListB.map((value: string) => pathBasename(value))
   );
 
-  // ListA、ListBに存在する同名のファイルのパスを取得する
-  const pathsExistOnlyInFormer: string[] = filePathListB
+  // ListAを回し、ListA,ListBに存在する同名のファイルのパスを取得する
+  const pathsExistOnlyInFormer: string[] = filePathListA
     .map((filePath): string | null => {
       const basename = pathBasename(filePath);
 
-      if (!basenameSetA.has(basename)) {
+      if (!basenameSetB.has(basename)) {
         return filePath;
       }
       return null;
