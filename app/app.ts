@@ -1,7 +1,7 @@
 import fs from "fs";
 import { join as pathJoin, basename as pathBasename } from "path";
 
-// ディレクトリからファイル/ディレクトリを再帰的に取得し、flatしたフルパスの配列を返す
+// ディレクトリからファイル/ディレクトリを再帰的に取得し、取得したフルパスを1次配列に整形して返す
 export function exploreDirectoryRecursively(dirPath: string): string[] {
   if (!fs.statSync(dirPath).isDirectory()) {
     return [];
@@ -24,21 +24,30 @@ export function exploreDirectoryRecursively(dirPath: string): string[] {
 }
 
 // 先に入力した引数にだけ存在するファイルを取得する
-export function getOnlyExistsInFormer(
+export function getPathsExistOnlyInFormer(
   filePathListA: string[],
   filePathListB: string[]
 ): string[] {
-  // dirB/ファイル までのパスを詰めたセットを作成
+  // dirB/ファイル のファイル名を詰めたセットを作成
   const basenameSetB = new Set<string>(
-    filePathListB.map((value: string) => pathBasename(value))
+    filePathListB.map((filePath: string) => {
+      // JSON形式にして比較する
+      return JSON.stringify({
+        basename: pathBasename(filePath),
+        fileSize: fs.statSync(filePath).size,
+      });
+    })
   );
 
-  // ListAを回し、ListA,ListBに存在する同名のファイルのパスを取得する
   const pathsExistOnlyInFormer: string[] = filePathListA
     .map((filePath): string | null => {
-      const basename = pathBasename(filePath);
+      const fileA = JSON.stringify({
+        basename: pathBasename(filePath),
+        fileSize: fs.statSync(filePath).size,
+      });
 
-      if (!basenameSetB.has(basename)) {
+      // { basename, fileSize }をJSON形式で比較し、dirAに存在するファイルのみを抽出
+      if (!basenameSetB.has(fileA)) {
         return filePath;
       }
       return null;
@@ -63,7 +72,7 @@ export function checkExistsFileOrDirectory(path: string): boolean {
 }
 
 async function main() {
-  // 引数が２個付けてあるかの確認
+  // 引数が2個付けてあるかの確認
   if (process.argv.length === 5) {
     throw new Error(
       "引数に探索対象ディレクトリのパスを２つ付けて実行してください"
@@ -84,7 +93,7 @@ async function main() {
   const filePathListB = exploreDirectoryRecursively(baseDirB);
 
   // baseDirAに存在するファイルだけを抽出
-  const onlyExistsBaseDirA = getOnlyExistsInFormer(
+  const onlyExistsBaseDirA = getPathsExistOnlyInFormer(
     filePathListA,
     filePathListB
   );
