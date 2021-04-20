@@ -1,4 +1,4 @@
-import { checkExistsFileOrDirectory, getOnlyExistsInFormer } from "./app";
+import { checkExistsFileOrDirectory, getPathsExistOnlyInFormer } from "./app";
 
 const listA = [
   "/Users/suzukidaisuke/work/dirs/dirA/pokemon/pichu.txt",
@@ -25,7 +25,7 @@ describe("checkExistsFileOrDirectory", () => {
 
 describe("getOnlyExistsInFormer", () => {
   test("ListAにのみ存在するパスを取得できる", () => {
-    const onlyExistsListA = getOnlyExistsInFormer(listA, listB);
+    const onlyExistsListA = getPathsExistOnlyInFormer(listA, listB);
     expect(onlyExistsListA).toContain(
       "/Users/suzukidaisuke/work/dirs/dirA/pokemon/pichu.txt"
     );
