@@ -72,8 +72,10 @@ export function checkExistsFileOrDirectory(path: string): boolean {
 }
 
 async function main() {
+  console.log(process.argv.length);
+
   // 引数が2個付けてあるかの確認
-  if (process.argv.length === 5) {
+  if (process.argv.length !== 4) {
     throw new Error(
       "引数に探索対象ディレクトリのパスを２つ付けて実行してください"
     );
@@ -103,5 +105,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1); // process.exit()があるとtestできない？
+  process.exit(1);
 });
