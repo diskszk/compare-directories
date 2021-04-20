@@ -1,8 +1,4 @@
-import {
-  getFilename,
-  checkExistsFileOrDirectory,
-  getOnlyExistsInFormer,
-} from "./app";
+import { checkExistsFileOrDirectory, getPathsExistOnlyInFormer } from "./app";
 
 const listA = [
   "/Users/suzukidaisuke/work/dirs/dirA/pokemon/pichu.txt",
@@ -15,13 +11,6 @@ const listB = [
 ];
 const existsPath = "/Users/suzukidaisuke/work/dirs/dirB/mario/luige.txt";
 const notExistsPath = "/Foo/bar/example/test.txt";
-
-describe("getFilename", () => {
-  test("pathの末尾のファイル名を取得できる", () => {
-    const filename = getFilename(existsPath);
-    expect(filename).toBe("luige.txt");
-  });
-});
 
 describe("checkExistsFileOrDirectory", () => {
   test("存在するファイルパスを引数に受け取った場合にtrueを返す", () => {
@@ -36,7 +25,7 @@ describe("checkExistsFileOrDirectory", () => {
 
 describe("getOnlyExistsInFormer", () => {
   test("ListAにのみ存在するパスを取得できる", () => {
-    const onlyExistsListA = getOnlyExistsInFormer(listA, listB);
+    const onlyExistsListA = getPathsExistOnlyInFormer(listA, listB);
     expect(onlyExistsListA).toContain(
       "/Users/suzukidaisuke/work/dirs/dirA/pokemon/pichu.txt"
     );

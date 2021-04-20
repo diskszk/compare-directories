@@ -1,10 +1,8 @@
 import fs from "fs";
 import { join as pathJoin, basename as pathBasename } from "path";
 
-type Foo = string | Foo[];
-
-// ディレクトリからファイル/ディレクトリを再帰的に取得する
-export function exploreDirectoryRecursively(dirPath: string): string[] | [] {
+// ディレクトリからファイル/ディレクトリを再帰的に取得し、取得したフルパスを1次配列に整形して返す
+export function exploreDirectoryRecursively(dirPath: string): string[] {
   if (!fs.statSync(dirPath).isDirectory()) {
     return [];
   }
@@ -25,38 +23,38 @@ export function exploreDirectoryRecursively(dirPath: string): string[] | [] {
     .flat();
 }
 
-//  pathの末尾のファイル名を取得
-export function getFilename(fullPath: string): string {
-  //  fileであることを担保
-  if (!fs.statSync(fullPath).isFile()) {
-    console.log(`${fullPath}はファイルではありません`);
-    return "";
-  }
-  return pathBasename(fullPath);
-}
-
 // 先に入力した引数にだけ存在するファイルを取得する
-export function getOnlyExistsInFormer(
+export function getPathsExistOnlyInFormer(
   filePathListA: string[],
   filePathListB: string[]
-): Set<string> {
-  // dirA/ファイル までのパスを詰めたセットを作成
-  const filePathListASet = new Set<string>(filePathListA);
+): string[] {
+  // dirB/ファイル のファイル名を詰めたセットを作成
+  const basenameSetB = new Set<string>(
+    filePathListB.map((filePath: string) => {
+      // JSON形式にして比較する
+      return JSON.stringify({
+        basename: pathBasename(filePath),
+        fileSize: fs.statSync(filePath).size,
+      });
+    })
+  );
 
-  filePathListA.map((filePathA) => {
-    const filenameA = getFilename(filePathA);
+  const pathsExistOnlyInFormer: string[] = filePathListA
+    .map((filePath): string | null => {
+      const fileA = JSON.stringify({
+        basename: pathBasename(filePath),
+        fileSize: fs.statSync(filePath).size,
+      });
 
-    // ListBに同名のファイルが存在する場合セットから除外する
-    filePathListB.map((filePathB) => {
-      const filenameB = getFilename(filePathB);
-
-      if (filenameA === filenameB) {
-        filePathListASet.delete(filePathA);
+      // { basename, fileSize }をJSON形式で比較し、dirAに存在するファイルのみを抽出
+      if (!basenameSetB.has(fileA)) {
+        return filePath;
       }
-    });
-  });
+      return null;
+    })
+    .filter(Boolean) as string[];
 
-  return filePathListASet;
+  return pathsExistOnlyInFormer;
 }
 
 export function checkExistsFileOrDirectory(path: string): boolean {
@@ -74,7 +72,7 @@ export function checkExistsFileOrDirectory(path: string): boolean {
 }
 
 async function main() {
-  // 引数が２個付けてあるかの確認
+  // 引数が2個付けてあるかの確認
   if (process.argv.length === 5) {
     throw new Error(
       "引数に探索対象ディレクトリのパスを２つ付けて実行してください"
@@ -94,11 +92,8 @@ async function main() {
   const filePathListA = exploreDirectoryRecursively(baseDirA);
   const filePathListB = exploreDirectoryRecursively(baseDirB);
 
-  // console.dir({ result: filePathListA }, { depth: null });
-  // console.dir({ result: filePathListB }, { depth: null });
-
   // baseDirAに存在するファイルだけを抽出
-  const onlyExistsBaseDirA = getOnlyExistsInFormer(
+  const onlyExistsBaseDirA = getPathsExistOnlyInFormer(
     filePathListA,
     filePathListB
   );
@@ -108,5 +103,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  // process.exit(1); // process.exit()があるとtestできない？
+  process.exit(1); // process.exit()があるとtestできない？
 });
